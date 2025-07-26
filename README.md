@@ -36,5 +36,5 @@ python train_yourtts.py
 ```
 The script downloads the TTS repository, cleans the dataset in
 `/content/gma_audio_files`, creates a configuration with multilingual and
-multi-speaker support, and launches training with checkpoints saved to
-`/content/yourtts_output`.
+multi-speaker support, installs missing Python dependencies, and launches
+training with checkpoints saved to `/content/yourtts_output`.

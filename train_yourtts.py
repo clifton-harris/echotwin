@@ -2,7 +2,14 @@ import os
 import json
 import subprocess
 import sys
-import pandas as pd
+
+def ensure_dependencies() -> None:
+    """Install required Python packages if they are missing."""
+    for pkg in ("numpy", "pandas"):
+        try:
+            __import__(pkg)
+        except ImportError:
+            subprocess.run([sys.executable, "-m", "pip", "install", pkg], check=True)
 
 
 def clone_and_install_tts(repo_dir="/content/TTS"):
@@ -14,6 +21,7 @@ def clone_and_install_tts(repo_dir="/content/TTS"):
 
 def sanitize_metadata(data_dir="/content/gma_audio_files"):
     """Read metadata.csv and keep entries with valid audio and transcript."""
+    import pandas as pd
     metadata_path = os.path.join(data_dir, "metadata.csv")
     df = pd.read_csv(metadata_path, sep="|", names=["file", "text"], header=None)
     valid_rows = []
@@ -64,6 +72,7 @@ def train_model(config_path="/content/yourtts_config.json"):
 
 
 def main():
+    ensure_dependencies()
     clone_and_install_tts()
     sanitize_metadata()
     create_config()
