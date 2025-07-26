@@ -5,7 +5,7 @@ import sys
 
 def ensure_dependencies() -> None:
     """Install required Python packages if they are missing."""
-    for pkg in ("numpy", "pandas"):
+    for pkg in ("numpy", "pandas", "gdown"):
         try:
             __import__(pkg)
         except ImportError:
@@ -17,6 +17,14 @@ def clone_and_install_tts(repo_dir="/content/TTS"):
     if not os.path.isdir(repo_dir):
         subprocess.run(["git", "clone", "https://github.com/coqui-ai/TTS.git", repo_dir], check=True)
     subprocess.run([sys.executable, "-m", "pip", "install", "-e", repo_dir], check=True)
+
+
+def download_dataset(url="https://drive.google.com/drive/folders/1RfS1byYz9KTxHRwgWR5Ve-HjY_YWussF?usp=sharing",
+                     data_dir="/content/gma_audio_files"):
+    """Download dataset from Google Drive if not already present."""
+    if not os.path.isdir(data_dir):
+        os.makedirs(data_dir, exist_ok=True)
+        subprocess.run(["gdown", "--folder", url, "-O", data_dir, "--remaining-ok"], check=True)
 
 
 def sanitize_metadata(data_dir="/content/gma_audio_files"):
@@ -74,6 +82,7 @@ def train_model(config_path="/content/yourtts_config.json"):
 def main():
     ensure_dependencies()
     clone_and_install_tts()
+    download_dataset()
     sanitize_metadata()
     create_config()
     train_model()
