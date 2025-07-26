@@ -34,7 +34,9 @@ your own dataset, run:
 ```bash
 python train_yourtts.py
 ```
-The script installs missing Python packages, downloads the training data from
-Google Drive into `/content/gma_audio_files`, cleans the metadata, clones the
-TTS repository, creates a multilingual, multi-speaker config, and launches
-training with checkpoints saved to `/content/yourtts_output`.
+The script installs missing Python packages and attempts to download the
+dataset archive from Google Drive into `/content/gma_audio_files`. If the
+download fails (for example, due to network restrictions), place the extracted
+files manually in that folder. Once the dataset exists, the script cleans the
+metadata, clones the TTS repository, creates a multilingual, multi-speaker
+config, and launches training with checkpoints saved to `/content/yourtts_output`.

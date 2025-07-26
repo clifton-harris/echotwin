@@ -2,10 +2,11 @@ import os
 import json
 import subprocess
 import sys
+from pathlib import Path
 
 def ensure_dependencies() -> None:
     """Install required Python packages if they are missing."""
-    for pkg in ("numpy", "pandas", "gdown"):
+    for pkg in ("numpy", "pandas", "gdown", "torch"):
         try:
             __import__(pkg)
         except ImportError:
@@ -19,12 +20,29 @@ def clone_and_install_tts(repo_dir="/content/TTS"):
     subprocess.run([sys.executable, "-m", "pip", "install", "-e", repo_dir], check=True)
 
 
-def download_dataset(url="https://drive.google.com/drive/folders/1RfS1byYz9KTxHRwgWR5Ve-HjY_YWussF?usp=sharing",
-                     data_dir="/content/gma_audio_files"):
-    """Download dataset from Google Drive if not already present."""
-    if not os.path.isdir(data_dir):
-        os.makedirs(data_dir, exist_ok=True)
-        subprocess.run(["gdown", "--folder", url, "-O", data_dir, "--remaining-ok"], check=True)
+def download_dataset(url: str = "https://drive.google.com/file/d/1t8FoVzZWQ5nPJglvatoHZLUjD2i3UlCi/view?usp=sharing",
+                     data_dir: str = "/content/gma_audio_files"):
+    """Download and extract dataset if missing.
+
+    The dataset is expected as a zip archive accessible via Google Drive.
+    """
+    data_path = Path(data_dir)
+    if data_path.is_dir() and any(data_path.iterdir()):
+        return
+
+    data_path.mkdir(parents=True, exist_ok=True)
+    zip_path = data_path / "dataset.zip"
+    try:
+        subprocess.run([
+            "gdown",
+            "--fuzzy",
+            url,
+            "-O",
+            str(zip_path)
+        ], check=True)
+        subprocess.run(["unzip", "-o", str(zip_path), "-d", str(data_path)], check=True)
+    except subprocess.CalledProcessError as exc:
+        print(f"Dataset download failed: {exc}")
 
 
 def sanitize_metadata(data_dir="/content/gma_audio_files"):
@@ -34,18 +52,21 @@ def sanitize_metadata(data_dir="/content/gma_audio_files"):
     df = pd.read_csv(metadata_path, sep="|", names=["file", "text"], header=None)
     valid_rows = []
     for _, row in df.iterrows():
-        audio_path = os.path.join(data_dir, row["file"].strip())
+        audio_path = os.path.join(data_dir, str(row["file"]).strip())
         transcript = str(row["text"]).strip()
         if os.path.isfile(audio_path) and transcript:
-            valid_rows.append((row["file"].strip(), transcript))
+            valid_rows.append((os.path.basename(audio_path), transcript))
     clean_df = pd.DataFrame(valid_rows, columns=["file", "text"])
     clean_df.to_csv(metadata_path, sep="|", index=False, header=False)
 
 
 def create_config(config_path="/content/yourtts_config.json", output_path="/content/yourtts_output"):
     os.makedirs(output_path, exist_ok=True)
-    use_cuda = subprocess.run(["python", "-c", "import torch,sys;sys.exit(0) if torch.cuda.is_available() else sys.exit(1)"],
-                              capture_output=True)
+    use_cuda = subprocess.run([
+        "python",
+        "-c",
+        "import torch,sys;sys.exit(0) if torch.cuda.is_available() else sys.exit(1)"
+    ], capture_output=True)
     config = {
         "output_path": output_path,
         "datasets": [{"name": "gma_dataset", "path": "/content/gma_audio_files"}],
