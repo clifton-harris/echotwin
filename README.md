@@ -25,3 +25,20 @@ EchoTwin is an AI-powered platform that allows users to upload photos, videos, a
 cd frontend
 npm install
 npm start
+```
+
+### Voice Cloning Training
+To fine-tune the [Coqui TTS](https://github.com/coqui-ai/TTS) YourTTS model on
+your own dataset, run:
+
+```bash
+python train_yourtts.py
+```
+The script installs missing Python packages and attempts to download the
+dataset archive from Google Drive into `/content/gma_audio_files` using
+`gdown.download`. The shared URL is converted to a direct download link and the
+zip file is extracted automatically. If the download fails (for example, due to
+network restrictions), place the extracted files manually in that folder. Once
+the dataset exists, the script cleans the metadata, clones the TTS repository,
+creates a multilingual, multi-speaker config, and launches training with
+checkpoints saved to `/content/yourtts_output`.
